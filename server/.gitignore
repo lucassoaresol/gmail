@@ -1,0 +1,11 @@
+node_modules
+venv
+
+credentials
+pg-utils.json
+
+__pycache__
+dist
+*lock*
+.env
+logs
