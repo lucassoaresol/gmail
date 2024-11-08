@@ -1,6 +1,4 @@
 import argparse
-import json
-import os
 
 from gmail_manager import GmailManager
 
@@ -9,39 +7,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "id", type=str, help="ID do cliente para acessar as credenciais"
     )
+    parser.add_argument("--to", type=str, required=True, help="Destinatário do e-mail")
+    parser.add_argument("--subject", type=str, required=True, help="Assunto do e-mail")
+    parser.add_argument("--body", type=str, required=True, help="Corpo do e-mail")
+    parser.add_argument("--cc", nargs="*", default=[], help="Lista de CC")
+    parser.add_argument("--bcc", nargs="*", default=[], help="Lista de BCC")
+    parser.add_argument("--attachments", nargs="*", default=[], help="Lista de anexos")
 
     args = parser.parse_args()
     gmail_manager = GmailManager(id=args.id)
 
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    credentials_path = os.path.join(project_root, "credentials", args.id)
-    email_file = os.path.join(credentials_path, "send_email.json")
+    gmail_manager.send_email(
+        to=args.to,
+        subject=args.subject,
+        body=args.body,
+        cc=args.cc,
+        bcc=args.bcc,
+        attachments=args.attachments,
+    )
 
-    if not os.path.exists(email_file):
-        print("Nenhum email pendente para envio.")
-    else:
-        with open(email_file, "r", encoding="utf-8") as file:
-            email_data = json.load(file)
-
-        cc = email_data.get("cc") if email_data.get("cc") is not None else []
-        bcc = email_data.get("bcc") if email_data.get("bcc") is not None else []
-        attachments = (
-            email_data.get("attachments")
-            if email_data.get("attachments") is not None
-            else []
-        )
-
-        gmail_manager.send_email(
-            to=email_data["to"],
-            subject=email_data["subject"],
-            body=email_data["body"],
-            cc=cc,
-            bcc=bcc,
-            attachments=attachments,
-        )
-
-        try:
-            os.remove(email_file)
-            print(f"Arquivo {email_file} excluído após o envio.")
-        except OSError as e:
-            print(f"Erro ao excluir o arquivo {email_file}: {e}")
+    print("E-mail enviado com sucesso.")
