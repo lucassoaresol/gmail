@@ -4,7 +4,6 @@ import express from "express";
 import { getClientManager } from "../models/clientManager.js";
 
 import verifyClient from "./middlewares/verifyClient.js";
-import verifyClientConnect from "./middlewares/verifyClientConnect.js";
 import clientRouter from "./routes/client.js";
 import clientManagerRouter from "./routes/clientManager.js";
 
@@ -20,6 +19,6 @@ app.use(async (req, res, next) => {
 });
 
 app.use("/clients", clientRouter);
-app.use("/:id", verifyClient, verifyClientConnect, clientManagerRouter);
+app.use("/:id", verifyClient, clientManagerRouter);
 
 export default app;
