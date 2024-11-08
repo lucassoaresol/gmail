@@ -31,21 +31,9 @@ emailRouter.post("", async (req: Request, res: Response) => {
     attachments = null,
   } = req.body;
 
-  try {
-    await req.client.createEmailFileAndSend(
-      to,
-      subject,
-      body,
-      cc,
-      bcc,
-      attachments,
-    );
+  await req.client.sendEmail(to, subject, body, cc, bcc, attachments);
 
-    res.status(201).json({ message: "Email saved for sending." });
-  } catch (error) {
-    console.error("Erro ao salvar o email para envio:", error);
-    res.status(500).json({ message: "Failed to save email for sending." });
-  }
+  res.status(201).json({ message: "Email saved for sending." });
 });
 
 export default emailRouter;
