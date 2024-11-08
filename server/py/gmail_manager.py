@@ -59,6 +59,7 @@ class GmailManager:
     ):
         try:
             message = self.gmail.send_message(
+                sender="monitoramento@insidedb.com.br",
                 to=to,
                 subject=subject,
                 msg_html=body,
