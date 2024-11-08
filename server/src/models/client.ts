@@ -1,8 +1,9 @@
+import { spawn } from "node:child_process";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { env } from "../config/env";
 import databasePromise from "../libs/database";
-import { sendEmail } from "../utils/sendEmail";
 
 class Client {
   private id: string;
@@ -84,7 +85,7 @@ class Client {
     }
   }
 
-  public async createEmailFileAndSend(
+  public async sendEmail(
     to: string,
     subject: string,
     body: string,
@@ -96,24 +97,49 @@ class Client {
       to,
       subject,
       body,
-      cc,
-      bcc,
-      attachments,
+      cc: cc || [],
+      bcc: bcc || [],
+      attachments: attachments || [],
     };
 
-    const credentialsPath = `./credentials/${this.id}`;
+    const pythonScriptPath = "./py/send_email.py";
 
-    const filePath = join(credentialsPath, "send_email.json");
+    const venvPath =
+      env.envType === "windows" ? "./venv/Scripts/python" : "./venv/bin/python";
 
     try {
-      await writeFile(filePath, JSON.stringify(emailData, null, 2), "utf8");
-      console.log(`Arquivo ${filePath} criado com sucesso.`);
+      const process = spawn(venvPath, [
+        pythonScriptPath,
+        this.id,
+        "--to",
+        emailData.to,
+        "--subject",
+        emailData.subject,
+        "--body",
+        emailData.body,
+        "--cc",
+        ...emailData.cc,
+        "--bcc",
+        ...emailData.bcc,
+        "--attachments",
+        ...emailData.attachments,
+      ]);
+
+      process.stdout.on("data", (data) => {
+        console.log(`Python output: ${data}`);
+      });
+
+      process.stderr.on("data", (data) => {
+        console.error(`Python error: ${data}`);
+      });
+
+      process.on("close", (code) => {
+        console.log(`Processo Python finalizado com código ${code}`);
+      });
     } catch (error) {
-      console.error("Erro ao criar o arquivo send_email.json:", error);
+      console.error("Erro ao enviar e-mail:", error);
       return;
     }
-
-    await sendEmail(this.id);
   }
 }
 
