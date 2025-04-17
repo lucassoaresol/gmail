@@ -8,7 +8,7 @@ from simplegmail.query import construct_query
 
 
 class GmailManager:
-    def __init__(self, id: str):
+    def __init__(self, id: str, days=0):
         self.id = id
         self.project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..")
@@ -20,6 +20,10 @@ class GmailManager:
             ),
             creds_file=os.path.join(self.credentials_path, "gmail_token.json"),
         )
+        self.days = days
+        self.TODAY = datetime.now()
+        if self.days > 0:
+            self.TODAY -= timedelta(days=self.days)
 
     def process_messages(self, messages):
         for msg in messages:
@@ -31,14 +35,15 @@ class GmailManager:
                 "client_id": self.id,
             }
 
-            search_email = self.db.search_by_field("emails", "id", msg.id, ["id"])
+            search_email = self.db.find_first(
+                "emails", where={"id": msg.id}, select={"id": True}
+            )
             if not search_email:
                 self.db.insert_into_table("emails", email_data)
 
     def extract_emails(self, db: Database):
         self.db = db
-        today = datetime.now()
-        after_date = (today - timedelta(days=1)).strftime("%Y/%m/%d")
+        after_date = (self.TODAY - timedelta(days=1)).strftime("%Y/%m/%d")
 
         query_params = {
             "after": after_date,
