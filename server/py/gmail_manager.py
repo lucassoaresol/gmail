@@ -25,11 +25,19 @@ class GmailManager:
         if self.days > 0:
             self.TODAY -= timedelta(days=self.days)
 
+    def parse_date(self, date_str):
+        try:
+            return arrow.get(date_str).datetime
+        except arrow.parser.ParserError:
+            if "(-03)" in date_str:
+                date_str = date_str.split(" (")[0]
+            return arrow.get(date_str, "ddd, DD MMM YYYY HH:mm:ss Z").datetime
+
     def process_messages(self, messages):
         for msg in messages:
             email_data = {
                 "id": msg.id,
-                "date": arrow.get(msg.date).datetime,
+                "date": self.parse_date(msg.date),
                 "subject": msg.subject,
                 "body": msg.html,
                 "client_id": self.id,
@@ -48,6 +56,12 @@ class GmailManager:
         query_params = {
             "after": after_date,
         }
+
+        if self.days > 0:
+            after_date = (self.TODAY - timedelta(days=3)).strftime("%Y/%m/%d")
+            before_date = (self.TODAY + timedelta(days=1)).strftime("%Y/%m/%d")
+
+            query_params = {"after": after_date, "before": before_date}
 
         messages = self.gmail.get_messages(query=construct_query(query_params))
 
