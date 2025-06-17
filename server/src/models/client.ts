@@ -1,9 +1,9 @@
-import { spawn } from "node:child_process";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { spawn } from 'node:child_process';
 
-import { env } from "../config/env";
-import databasePromise from "../libs/database";
+import { env } from '../config/env';
+import databaseGmailPromise from '../db/gmail';
 
 class Client {
   private id: string;
@@ -13,10 +13,10 @@ class Client {
   }
 
   public async save() {
-    const database = await databasePromise;
+    const database = await databaseGmailPromise;
 
     await database.insertIntoTable({
-      table: "clients",
+      table: 'clients',
       dataDict: { id: this.id },
     });
 
@@ -33,14 +33,14 @@ class Client {
       console.error(`Erro ao criar a pasta: ${error}`);
     }
 
-    const files = ["client_secret.json", "gmail_token.json"];
+    const files = ['client_secret.json', 'gmail_token.json'];
     for (const file of files) {
       const filePath = join(path, file);
       try {
         await access(filePath);
         console.log(`Arquivo já existe: ${filePath}`);
       } catch {
-        await writeFile(filePath, "");
+        await writeFile(filePath, '');
         console.log(`Arquivo criado: ${filePath}`);
       }
     }
@@ -48,12 +48,12 @@ class Client {
 
   public async isReady(): Promise<boolean> {
     const credentialsPath = `./credentials/${this.id}`;
-    const files = ["client_secret.json", "gmail_token.json"];
+    const files = ['client_secret.json', 'gmail_token.json'];
 
     for (const file of files) {
       const filePath = join(credentialsPath, file);
       try {
-        const content = await readFile(filePath, "utf8");
+        const content = await readFile(filePath, 'utf8');
         if (!content.trim()) {
           console.log(`Arquivo ${file} está vazio.`);
           return false;
@@ -64,35 +64,35 @@ class Client {
       }
     }
 
-    console.log("Todos os arquivos estão prontos para uso.");
+    console.log('Todos os arquivos estão prontos para uso.');
     return true;
   }
 
   public async hasPendingEmail(): Promise<boolean> {
     const credentialsPath = `./credentials/${this.id}`;
 
-    const filePath = join(credentialsPath, "send_email.json");
+    const filePath = join(credentialsPath, 'send_email.json');
 
     try {
       await access(filePath);
       console.log(
-        "Arquivo send_email.json encontrado. Email pendente de envio.",
+        'Arquivo send_email.json encontrado. Email pendente de envio.',
       );
       return true;
     } catch {
-      console.log("Nenhum email pendente de envio.");
+      console.log('Nenhum email pendente de envio.');
       return false;
     }
   }
 
-  public async sendEmail(
+  public async sendEmail({ attachments, bcc, body, cc, subject, to }: {
     to: string,
     subject: string,
     body: string,
-    cc: string[] | null = null,
-    bcc: string[] | null = null,
-    attachments: string[] | null = null,
-  ): Promise<void> {
+    cc?: string[]
+    bcc?: string[]
+    attachments?: string[]
+  }): Promise<void> {
     const emailData = {
       to,
       subject,
@@ -102,42 +102,42 @@ class Client {
       attachments: attachments || [],
     };
 
-    const pythonScriptPath = "./py/send_email.py";
+    const pythonScriptPath = './py/send_email.py';
 
     const venvPath =
-      env.envType === "windows" ? "./venv/Scripts/python" : "./venv/bin/python";
+      env.envType === 'windows' ? './venv/Scripts/python' : './venv/bin/python';
 
     try {
       const process = spawn(venvPath, [
         pythonScriptPath,
         this.id,
-        "--to",
+        '--to',
         emailData.to,
-        "--subject",
+        '--subject',
         emailData.subject,
-        "--body",
+        '--body',
         emailData.body,
-        "--cc",
+        '--cc',
         ...emailData.cc,
-        "--bcc",
+        '--bcc',
         ...emailData.bcc,
-        "--attachments",
+        '--attachments',
         ...emailData.attachments,
       ]);
 
-      process.stdout.on("data", (data) => {
+      process.stdout.on('data', (data) => {
         console.log(`Python output: ${data}`);
       });
 
-      process.stderr.on("data", (data) => {
+      process.stderr.on('data', (data) => {
         console.error(`Python error: ${data}`);
       });
 
-      process.on("close", (code) => {
+      process.on('close', (code) => {
         console.log(`Processo Python finalizado com código ${code}`);
       });
     } catch (error) {
-      console.error("Erro ao enviar e-mail:", error);
+      console.error('Erro ao enviar e-mail:', error);
       return;
     }
   }

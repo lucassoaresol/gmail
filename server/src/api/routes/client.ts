@@ -1,15 +1,11 @@
-import { Request, Response, Router } from "express";
+import { FastifyPluginAsync } from 'fastify';
 
-const clientRouter = Router();
+import { CreateClientController } from '../controllers/client/CreateClientController';
+import { ListClientController } from '../controllers/client/ListClientController';
 
-clientRouter.post("", async (req: Request, res: Response) => {
-  await req.clientManager.addClient(req.body.id);
-  res.status(201).json("sucess");
-});
-
-clientRouter.get("", (req: Request, res: Response) => {
-  const clients = req.clientManager.listClients();
-  res.json(clients);
-});
+const clientRouter: FastifyPluginAsync = async (fastify) => {
+  fastify.post('', CreateClientController.handle);
+  fastify.get('', ListClientController.handle);
+};
 
 export default clientRouter;

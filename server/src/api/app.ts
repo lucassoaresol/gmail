@@ -1,24 +1,12 @@
-import cors from "cors";
-import express from "express";
+import Fastify from 'fastify';
 
-import { ClientManagerPromise } from "../models/clientManager.js";
+import { errorHandler } from './errors/handleError.js';
+import router from './routes/index.js';
 
-import verifyClient from "./middlewares/verifyClient.js";
-import clientRouter from "./routes/client.js";
-import clientManagerRouter from "./routes/clientManager.js";
+const app = Fastify();
 
-const app = express();
+app.register(router);
 
-app.use(cors());
-app.use(express.json());
-
-app.use(async (req, res, next) => {
-  const clientManager = await ClientManagerPromise;
-  req.clientManager = clientManager;
-  next();
-});
-
-app.use("/clients", clientRouter);
-app.use("/:id", verifyClient, clientManagerRouter);
+app.setErrorHandler(errorHandler);
 
 export default app;

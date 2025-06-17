@@ -1,13 +1,13 @@
-import { IClient } from "../interfaces/client";
-import databasePromise from "../libs/database";
+import { IClient } from '../interfaces/client';
+import databaseGmailPromise from '../db/gmail';
 
-import Client from "./client";
+import Client from './client';
 
 class ClientManager {
   private static instance: ClientManager;
   private clients: Map<string, Client> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   public static async getInstance(): Promise<ClientManager> {
     if (!ClientManager.instance) {
@@ -19,10 +19,10 @@ class ClientManager {
 
   private async loadDataFromDatabase() {
     try {
-      const database = await databasePromise;
+      const database = await databaseGmailPromise;
 
       const resultClient = await database.findMany<IClient>({
-        table: "clients",
+        table: 'clients',
       });
       const clientIds = resultClient.map((row) => row.id);
 
@@ -30,7 +30,7 @@ class ClientManager {
         await this.addClient(id, false);
       }
     } catch (error) {
-      console.error("Error loading clients from database:", error);
+      console.error('Error loading clients from database:', error);
     }
   }
 
@@ -42,7 +42,7 @@ class ClientManager {
 
     const client = new Client(id);
     this.clients.set(id, client);
-    if (save) await client.save();
+    if (save) { await client.save(); }
     console.log(`Client with ID ${id} has been added and started.`);
   }
 
@@ -67,7 +67,7 @@ export const ClientManagerPromise: Promise<ClientManager> = (async () => {
     const clientsManager = await ClientManager.getInstance();
     return clientsManager;
   } catch (error) {
-    console.error("Erro ao inicializar o banco de dados:", error);
+    console.error('Erro ao inicializar o banco de dados:', error);
     throw error;
   }
 })();

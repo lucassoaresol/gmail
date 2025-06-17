@@ -1,7 +1,23 @@
-import { env } from "../config/env";
+import FastifyCors from '@fastify/cors';
 
-import app from "./app";
+import { env } from '../config/env';
+import { getLocalIPs } from '../utils/getLocalIP';
 
-app.listen(env.port, () =>
-  console.log(`Servidor iniciado na porta ${env.port}`),
-);
+import app from './app';
+
+async function main() {
+  await app.register(FastifyCors);
+
+  await app.listen({ host: '0.0.0.0', port: env.port });
+
+  const ips = getLocalIPs();
+
+  console.log(`🚀 Servidor iniciado na porta ${env.port}`);
+  console.log('🌐 Acessível em:');
+
+  for (const ip of ips) {
+    console.log(`   → http://${ip}:${env.port}`);
+  }
+}
+
+main();

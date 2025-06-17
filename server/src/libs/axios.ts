@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios from 'axios';
 
-import { env } from "../config/env";
+import { env } from '../config/env';
 
 const apiUsingNow = axios.create({
   baseURL: `http://localhost:${env.port}`,
@@ -8,7 +8,7 @@ const apiUsingNow = axios.create({
 });
 
 export const listClientMail = async () => {
-  const { data } = await apiUsingNow.get<string[]>("clients");
+  const { data } = await apiUsingNow.get<string[]>('clients');
 
   return data;
 };

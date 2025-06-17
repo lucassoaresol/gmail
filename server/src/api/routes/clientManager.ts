@@ -1,9 +1,13 @@
-import { Router } from "express";
+import { FastifyPluginAsync } from 'fastify';
 
-import emailRouter from "./email.js";
+import verifyClient from '../plugins/verifyClient';
 
-const clientManagerRouter = Router();
+import emailRouter from './email';
 
-clientManagerRouter.use("/emails", emailRouter);
+const clientManagerRouter: FastifyPluginAsync = async (fastify) => {
+  fastify.register(verifyClient);
+
+  fastify.register(emailRouter, { prefix: '/emails' });
+};
 
 export default clientManagerRouter;
